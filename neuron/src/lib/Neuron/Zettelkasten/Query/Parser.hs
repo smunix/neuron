@@ -15,6 +15,7 @@ module Neuron.Zettelkasten.Query.Parser where
 
 import Control.Monad.Except
 import Data.Some
+import Data.Text.Read (decimal)
 import Data.TagTree (mkTagPattern)
 import Neuron.Zettelkasten.Connection
 import Neuron.Zettelkasten.ID
@@ -97,7 +98,10 @@ queryFromURILink (URILink linkText uri) =
             getQueryParam [queryKey|linkTheme|] uri == Just "withDate"
               || hasQueryFlag [queryKey|timeline|] uri
           isGrouped = hasQueryFlag [queryKey|grouped|] uri
-       in ZettelsView (LinkView isTimeline) isGrouped
+          viewColumns = case getParamValues "columns" uri of
+                          (i:_) -> either (const 2) (fst) (decimal i)
+                          _ -> if hasQueryFlag [queryKey|columns|] uri then 2 else 1
+       in ZettelsView (LinkView isTimeline) isGrouped viewColumns
     getParamValues k u =
       flip mapMaybe (URI.uriQuery u) $ \case
         URI.QueryParam (URI.unRText -> key) (URI.unRText -> val) ->

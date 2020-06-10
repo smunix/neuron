@@ -13,7 +13,8 @@ import Relude
 
 data ZettelsView = ZettelsView
   { zettelsViewLinkView :: LinkView,
-    zettelsViewGroupByTag :: Bool
+    zettelsViewGroupByTag :: Bool,
+    zettelsViewColumns :: Int
   }
   deriving (Eq, Show, Ord, Generic, ToJSON, FromJSON)
 
@@ -28,4 +29,4 @@ instance Default LinkView where
   def = LinkView False
 
 instance Default ZettelsView where
-  def = ZettelsView def False
+  def = ZettelsView def False 1

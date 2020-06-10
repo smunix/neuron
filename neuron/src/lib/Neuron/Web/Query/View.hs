@@ -49,20 +49,30 @@ renderQueryResult = \case
   q@(ZettelQuery_ZettelsByTag pats (fromMaybe def -> conn) view) :=> Identity res -> do
     el "section" $ do
       renderQuery $ Some q
-      case zettelsViewGroupByTag view of
-        False ->
-          el "ul" $ forM_ res $ \z -> do
-            el "li" $
-              renderZettelLink (Just conn) (Just $ zettelsViewLinkView view) z
-        True ->
-          forM_ (Map.toList $ groupZettelsByTagsMatching pats res) $ \(tag, zettelGrp) -> do
-            el "section" $ do
-              elClass "span" "ui basic pointing below grey label" $ do
-                semanticIcon "tag"
-                text $ unTag tag
-              el "ul" $ forM_ zettelGrp $ \z ->
-                el "li" $
-                  renderZettelLink (Just conn) (Just $ zettelsViewLinkView view) z
+      elClass "table" "ui very basic table" $ el "tbody" $ do
+        case zettelsViewGroupByTag view of
+          False ->
+            forM_ (subListOf (zettelsViewColumns view) res) $ \zs -> do
+              el "tr" $ do
+                forM_ zs $ \z -> do
+                  el "td" $ do
+                    renderZettelLink (Just conn) (Just $ zettelsViewLinkView view) z
+          True ->
+            forM_ (subListOf (zettelsViewColumns view) . Map.toList $ groupZettelsByTagsMatching pats res) $ \tagZettelGrpList -> do
+              el "tr" $ do
+                forM_ tagZettelGrpList $ \(tag, zettelGrp) -> do
+                  el "td" $ do
+                    -- el "section" $ do
+                      elClass "table" "ui very basic selectable table" $ el "tbody" $ do
+                        el "tr" $ do
+                          el "th" $ do
+                            elClass "span" "ui basic pointing below grey label" $ do
+                              semanticIcon "tag"
+                              text $ unTag tag
+                        forM_ zettelGrp $ \z ->
+                          el "tr" $ do
+                            el "td" $ do
+                              renderZettelLink (Just conn) (Just $ zettelsViewLinkView view) z
   q@(ZettelQuery_Tags _) :=> Identity res -> do
     el "section" $ do
       renderQuery $ Some q
@@ -72,6 +82,15 @@ renderQueryResult = \case
     groupZettelsByTagsMatching pats matches =
       fmap sortZettelsReverseChronological $ Map.fromListWith (<>) $ flip concatMap matches $ \z ->
         flip concatMap (zettelTags z) $ \t -> [(t, [z]) | tagMatchAny pats t]
+    subListOf :: Int -> [a] -> [[a]]
+    subListOf _ [] = []
+    subListOf n as
+      | length as <= n = [as]
+      | otherwise = go n as []
+      where
+        go _ [] cur = cur:(subListOf n [])
+        go 0 xs cur = cur:(subListOf n xs)
+        go len (x:xs) cur = go (len-1) xs (x:cur)
 
 renderQuery :: DomBuilder t m => Some ZettelQuery -> m ()
 renderQuery someQ =
