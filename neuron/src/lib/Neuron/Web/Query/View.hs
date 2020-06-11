@@ -221,3 +221,10 @@ zettelLinkCss neuronTheme = do
     C.border C.solid (C.px 1) C.red
   "[data-tooltip]:after" ? do
     C.fontSize $ em 0.7
+  "div.box" ? do
+    C.display C.none
+    C.width (C.pct 50)
+  "a:hover + .box,.box:hover" ? do
+    C.display C.block
+    C.position C.relative
+    C.zIndex 100

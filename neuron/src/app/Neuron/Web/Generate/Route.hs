@@ -40,7 +40,11 @@ renderStaticRoute :: DomBuilder t m => Some Route -> Map Text Text -> m a -> m a
 renderStaticRoute someR attrs w =
   withSome someR $ \r -> do
     let hrefAttr :: Map Text Text = "href" =: routeUrlRel r
-    elAttr "a" (attrs <> hrefAttr) w
+    r' <- elAttr "a" (attrs <> hrefAttr) w
+    _ <- divClass "box" $ do
+      r'' <- elAttr "embed" ("src" =: routeUrlRel r <> "height" =: "100px"  <> "width" =: "100px") w
+      return r''
+    return r'
 
 -- | Like `routeUrlRel` but takes a query parameter
 routeUrlRelWithQuery :: HasCallStack => IsRoute r => r a -> URI.RText 'URI.QueryKey -> Text -> Text
